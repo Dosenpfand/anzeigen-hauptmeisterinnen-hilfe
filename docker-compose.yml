@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # - GOOGLE_API_KEY=${GOOGLE_API_KEY} # Set this in a .env file or your environment
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-20}
+      - RATE_LIMIT_HOURS=${RATE_LIMIT_HOURS:-10}
+    env_file:
+      - .env
+    # For development, you might want to mount your code for live reloading.
+    # For production, the code is copied into the image, so this is not strictly needed.
+    # volumes:
+    #   - ./app.py:/app/app.py
+    #   - ./static:/app/static

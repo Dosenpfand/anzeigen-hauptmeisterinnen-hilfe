@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "click>=8.2.1",
     "fastapi>=0.115.12",
     "google-genai>=1.16.1",
     "google-generativeai>=0.8.5",
@@ -14,6 +15,8 @@ dependencies = [
     "python-multipart>=0.0.20",
     "pytz>=2025.2",
     "uvicorn[standard]>=0.34.2",
+    "slowapi>=0.1.9",
+    "h11>=0.16.0",
 ]
 
 [dependency-groups]

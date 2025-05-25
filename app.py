@@ -1,6 +1,9 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from PIL import Image, UnidentifiedImageError
 from PIL.ExifTags import GPSTAGS
 from datetime import datetime
@@ -13,7 +16,18 @@ from google.genai import types
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Rate Limiting
+# Default: 20 requests per 10 hours
+RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "20"))
+RATE_LIMIT_HOURS = int(os.getenv("RATE_LIMIT_HOURS", "10"))
+rate_limit_str = f"{RATE_LIMIT_REQUESTS}/{RATE_LIMIT_HOURS}hour"
+
+limiter = Limiter(key_func=get_remote_address, default_limits=[rate_limit_str])
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 try:
@@ -63,7 +77,8 @@ async def read_root():
 
 
 @app.post("/extract_info/")
-async def extract_info(file: UploadFile = File(...)):
+@limiter.limit(rate_limit_str)
+async def extract_info(request: Request, file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No selected file")
 

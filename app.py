@@ -1,4 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from PIL import Image, UnidentifiedImageError
 from PIL.ExifTags import GPSTAGS
 from datetime import datetime
@@ -12,6 +14,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = FastAPI()
+
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 try:
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -46,8 +51,21 @@ def get_decimal_from_dms(dms, ref):
     return decimal
 
 
-@app.post("/extract_exif_datetime/")
-async def extract_exif_datetime(file: UploadFile = File(...)):
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    # This assumes your index.html is in a 'static' directory.
+    # If you place index.html directly in the root, adjust the path.
+    # For simplicity, we'll read it here. A more robust way for larger apps
+    # would be to use Jinja2Templates or ensure StaticFiles serves index.html directly.
+    try:
+        with open("static/index.html") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    except FileNotFoundError:
+        return HTMLResponse(content="Frontend not found.", status_code=404)
+
+
+@app.post("/extract_info/")
+async def extract_info(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No selected file")
 
@@ -260,6 +278,7 @@ def generate(image_data, api_key):
         "Analyze this image and extract the vehicle number plate. "
         "The image contains a car. Focus on identifying the number plate text. "
         "If a number plate is clearly visible and legible, return only the characters of the number plate. "
+        "Do not insert any special characters, symbols, emojis, white spaces, etc."
         "If no number plate is visible, or if it's unreadable, return 'N/A'."
     )
 

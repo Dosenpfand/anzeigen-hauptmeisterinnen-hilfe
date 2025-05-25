@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-T-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Info Extractor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            display: block;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: calc(100% - 22px); /* Account for padding and border */
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .action-button { /* Style for the new email button */
+            background-color: #28a745; /* Green color */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-top: 15px; /* Space above the button */
+            display: none; /* Hidden by default */
+        }
+        .action-button:hover {
+            background-color: #218838;
+        }
+        #response {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            white-space: pre-wrap; /* Handles long lines */
+            word-wrap: break-word; /* Breaks long words */
+            font-family: "Courier New", Courier, monospace;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        /* Spinner styles */
+        #loadingSpinner {
+            border: 5px solid #f3f3f3; /* Light grey */
+            border-top: 5px solid #007bff; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto; /* Center spinner */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗Falschparker melden🅿️</h1>
+        <form id="uploadForm">
+            <label for="fileInput">Choose a JPG image</label>
+            <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg" required>
+            <button type="submit" id="submitButton">Extract info and create email</button>
+        </form>
+        <div id="loadingSpinner" style="display: none;"></div> <!-- Spinner Element -->
+        <div id="responseArea">
+            <h2 id="responseHeader" style="display: none;">Response:</h2>
+            <pre id="response" style="display: none;"></pre>
+            <button id="openEmailClientButton" class="action-button">Open in Email Client</button>
+            <p id="errorMessage" class="error"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const responseElement = document.getElementById('response');
+            const responseHeaderElement = document.getElementById('responseHeader'); // Get the header
+            const errorMessageElement = document.getElementById('errorMessage');
+            const emailButton = document.getElementById('openEmailClientButton');
+            const submitButton = document.getElementById('submitButton');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            // Reset UI
+            responseElement.textContent = '';
+            responseElement.style.display = 'none';
+            responseHeaderElement.style.display = 'none';
+            errorMessageElement.textContent = '';
+            emailButton.style.display = 'none';
+            loadingSpinner.style.display = 'none';
+
+            if (!fileInput.files.length) {
+                errorMessageElement.textContent = 'Please select a file.';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                loadingSpinner.style.display = 'block'; // Show spinner
+                submitButton.disabled = true; // Disable submit button
+
+                const response = await fetch('/extract_info/', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const address = data.address || "nicht verfügbar";
+                    const datetime = data.datetime_original_vienna; // Assuming this is always present on success
+                    const numberPlate = data.number_plate || "nicht verfügbar";
+
+                    // Format datetime_original_vienna for better readability
+                    let formattedDatetime = datetime;
+                    try {
+                        // Attempt to format the ISO string to a more common German representation
+                        const dateObj = new Date(datetime);
+                        const options = {
+                            year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit', second: '2-digit',
+                            hour12: false // Use 24-hour format
+                        };
+                        // Using German locale for date and time formatting
+                        formattedDatetime = dateObj.toLocaleString('de-DE', options) + " Uhr";
+                    } catch (e) {
+                        console.warn("Could not reformat datetime:", e);
+                        // Fallback to original if formatting fails
+                        formattedDatetime = datetime;
+                    }
+
+                    const reportText = `Sehr geehrtes Team der PÜG Wien,
+hiermit möchte ich einen Falschparker melden.
+
+Ort: ${address}
+Datum und Uhzeit: ${formattedDatetime}
+Fahrzeugkennzeichen: ${numberPlate}
+Fotos: Im Anhang
+
+Für Rückfragen stehe ich selbstverständliche gerne per E-Mail zur Verfügung.
+
+Mit freundlichen Grüßen`;
+                    responseHeaderElement.style.display = 'block'; // Show header
+                    responseElement.style.display = 'block'; // Show pre tag
+                    responseElement.textContent = reportText;
+                    emailButton.style.display = 'block'; // Show the email button
+
+                    // Add or update event listener for the email button
+                    emailButton.onclick = function() { // Use onclick for simplicity or manage listeners carefully
+                        const emailRecipient = 'rechtsmittel@ma67.wien.gv.at';
+
+                        // Format date for subject (e.g., DD.MM.YYYY)
+                        let subjectDate = '';
+                        try {
+                            const dateObj = new Date(datetime);
+                            const day = String(dateObj.getDate()).padStart(2, '0');
+                            const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+                            const year = dateObj.getFullYear();
+                            subjectDate = `${day}.${month}.${year}`;
+                        } catch (e) {
+                            console.warn("Could not format date for subject:", e);
+                            // Fallback to a generic part of the datetime string if formatting fails
+                            subjectDate = datetime.split('T')[0];
+                        }
+
+                        const emailSubject = `Falschparker ${subjectDate}, ${address}`;
+                        const emailBody = encodeURIComponent(reportText);
+                        window.location.href = `mailto:${emailRecipient}?subject=${encodeURIComponent(emailSubject)}&body=${emailBody}`;
+                    };
+
+                } else {
+                    errorMessageElement.textContent = `Error: ${data.detail || response.statusText}`;
+                    responseElement.textContent = '';
+                    responseElement.style.display = 'none'; // Ensure hidden on error
+                    responseHeaderElement.style.display = 'none'; // Ensure hidden on error
+                    emailButton.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessageElement.textContent = 'An unexpected error occurred. Check the console.';
+                responseElement.textContent = '';
+                responseElement.style.display = 'none'; // Ensure hidden on error
+                responseHeaderElement.style.display = 'none'; // Ensure hidden on error
+            } finally {
+                loadingSpinner.style.display = 'none'; // Hide spinner
+                submitButton.disabled = false; // Re-enable submit button
+            }
+        });
+    </script>
+</body>
+</html>

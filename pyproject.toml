@@ -1,0 +1,14 @@
+[project]
+name = "falschparker"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115.12",
+    "httpx>=0.28.1",
+    "pillow>=11.2.1",
+    "python-multipart>=0.0.20",
+    "pytz>=2025.2",
+    "uvicorn[standard]>=0.34.2",
+]

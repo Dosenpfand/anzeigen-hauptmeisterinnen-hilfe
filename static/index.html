@@ -5,44 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Falschparker melden</title>
     <style>
+        :root {
+            --background-color: #f4f4f9;
+            --text-color: #333;
+            --container-background: #fff;
+            --input-border-color: #ddd;
+            --input-background-color: #fff;
+            --button-background-color: #007bff;
+            --button-text-color: white;
+            --button-hover-background-color: #0056b3;
+            --action-button-background-color: #28a745;
+            --action-button-hover-background-color: #218838;
+            --response-background-color: #e9ecef;
+            --response-border-color: #ced4da;
+            --header-color: #007bff;
+            --spinner-border-light: #f3f3f3;
+            --spinner-border-top: #007bff;
+            --toggle-slider-background: #ccc;
+            --toggle-slider-checked-background: #007bff;
+            --toggle-slider-knob-background: white;
+        }
+
+        [data-theme="dark"] {
+            --background-color: #121212;
+            --text-color: #e0e0e0;
+            --container-background: #1e1e1e;
+            --input-border-color: #444;
+            --input-background-color: #2a2a2a;
+            --button-background-color: #007bff;
+            --button-text-color: white;
+            --button-hover-background-color: #0056b3;
+            --action-button-background-color: #28a745;
+            --action-button-hover-background-color: #218838;
+            --response-background-color: #2c2c2c;
+            --response-border-color: #444;
+            --header-color: #3aa0ff; /* Lighter blue for dark theme */
+            --spinner-border-light: #444;
+            --spinner-border-top: #3aa0ff;
+            --toggle-slider-background: #555;
+            --toggle-slider-checked-background: #3aa0ff;
+            --toggle-slider-knob-background: #e0e0e0;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 40px;
-            background-color: #f4f4f9;
-            color: #333;
+            background-color: var(--background-color);
+            color: var(--text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: background-color 0.3s, color 0.3s;
         }
         .container {
-            background-color: #fff;
+            background-color: var(--container-background);
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 600px;
+            transition: background-color 0.3s;
+        }
+        [data-theme="dark"] .container {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         h1 {
-            color: #007bff;
+            color: var(--header-color);
             text-align: center;
             margin-bottom: 20px;
+            transition: color 0.3s;
         }
-        label {
+        label { /* Applies to form labels */
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
+            color: var(--text-color);
+            transition: color 0.3s;
         }
         input[type="file"] {
             display: block;
             margin-bottom: 20px;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--input-border-color);
+            background-color: var(--input-background-color);
+            color: var(--text-color);
             border-radius: 4px;
             width: calc(100% - 22px); /* Account for padding and border */
+            transition: border-color 0.3s, background-color 0.3s, color 0.3s;
         }
         button {
-            background-color: #007bff;
-            color: white;
+            background-color: var(--button-background-color);
+            color: var(--button-text-color);
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
@@ -51,56 +104,115 @@
             transition: background-color 0.3s ease;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: var(--button-hover-background-color);
         }
-        .action-button { /* Style for the new email button */
-            background-color: #28a745; /* Green color */
-            color: white;
+        .action-button {
+            background-color: var(--action-button-background-color);
+            color: var(--button-text-color); /* Assuming same text color as other buttons */
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s ease;
-            margin-top: 15px; /* Space above the button */
+            margin-top: 15px;
             display: none; /* Hidden by default */
         }
         .action-button:hover {
-            background-color: #218838;
+            background-color: var(--action-button-hover-background-color);
         }
         #response {
             margin-top: 30px;
             padding: 15px;
-            background-color: #e9ecef;
-            border: 1px solid #ced4da;
+            background-color: var(--response-background-color);
+            border: 1px solid var(--response-border-color);
+            color: var(--text-color);
             border-radius: 4px;
-            white-space: pre-wrap; /* Handles long lines */
-            word-wrap: break-word; /* Breaks long words */
+            white-space: pre-wrap;
+            word-wrap: break-word;
             font-family: "Courier New", Courier, monospace;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
         }
         .error {
-            color: red;
+            color: red; /* Keeping red for errors as it stands out */
             margin-top: 10px;
         }
-        /* Spinner styles */
         #loadingSpinner {
-            border: 5px solid #f3f3f3; /* Light grey */
-            border-top: 5px solid #007bff; /* Blue */
+            border: 5px solid var(--spinner-border-light);
+            border-top: 5px solid var(--spinner-border-top);
             border-radius: 50%;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
-            margin: 20px auto; /* Center spinner */
+            margin: 20px auto;
+            transition: border-color 0.3s;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Theme toggle switch styles */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+        .theme-switch-wrapper label { /* Styles the "Dark Mode" text */
+            margin-right: 8px;
+            font-weight: normal; /* Override bold from general label style if desired */
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 50px;
+        }
+        .theme-switch input {
+            display:none;
+        }
+        .slider {
+            background-color: var(--toggle-slider-background);
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            background-color: var(--toggle-slider-knob-background);
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 16px;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--toggle-slider-checked-background);
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
     </style>
 </head>
 <body>
+    <div class="theme-switch-wrapper">
+        <label for="themeSwitch">☀️🌙</label> <!-- This label makes the text "Dark Mode" clickable -->
+        <label class="theme-switch" for="themeSwitch"> <!-- This new label makes the visual slider part clickable -->
+            <input type="checkbox" id="themeSwitch">
+            <span class="slider round"></span>
+        </label>
+    </div>
     <div class="container">
-        <h1>Falschparker melden🅿</h1>
+        <h1>Falschparker melden</h1>
         <form id="uploadForm">
             <label for="fileInput">Choose a JPG image</label>
             <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg" required>
@@ -232,6 +344,60 @@ Mit freundlichen Grüßen`;
             } finally {
                 loadingSpinner.style.display = 'none'; // Hide spinner
                 submitButton.disabled = false; // Re-enable submit button
+            }
+        });
+    </script>
+
+    <script>
+        const themeSwitch = document.getElementById('themeSwitch');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+        /**
+         * Sets the theme on the document and in localStorage.
+         * @param {string} theme - The theme to set ('light' or 'dark').
+         * @param {string} source - The source of the theme change ('auto', 'manual', 'system').
+         */
+        function setTheme(theme, source = 'auto') {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme); // Always store the current theme
+            themeSwitch.checked = theme === 'dark';
+
+            if (source === 'manual') {
+                localStorage.setItem('themeManuallySet', 'true');
+            } else if (source === 'system') {
+                // If theme is set by system (initial or subsequent change),
+                // it means any prior manual setting is now superseded by system preference
+                // (because this branch is only hit if 'themeManuallySet' was not 'true' prior).
+                localStorage.removeItem('themeManuallySet');
+            }
+            // If source === 'auto' (e.g. initial load from localStorage based on a previous manual set):
+            // - If localStorage.themeManuallySet was 'true', it remains 'true'.
+            // - If localStorage.themeManuallySet was not 'true', it remains not 'true'.
+            // So, no explicit action needed for 'themeManuallySet' when source is 'auto' here.
+        }
+
+        // Initialize theme
+        const manuallySetPreviously = localStorage.getItem('themeManuallySet') === 'true';
+        const currentSavedTheme = localStorage.getItem('theme');
+
+        if (manuallySetPreviously && currentSavedTheme) {
+            setTheme(currentSavedTheme, 'auto'); // Restore theme, maintaining manual preference status
+        } else if (prefersDarkScheme.matches) {
+            setTheme('dark', 'system');          // Set based on system preference
+        } else {
+            setTheme('light', 'system');         // Default to light, set by system logic
+        }
+
+        // Listener for toggle switch
+        themeSwitch.addEventListener('change', function(event) {
+            setTheme(event.target.checked ? 'dark' : 'light', 'manual');
+        });
+
+        // Listener for changes in system preference
+        prefersDarkScheme.addEventListener('change', (e) => {
+            // Only apply system preference if a theme hasn't been manually set by the user.
+            if (localStorage.getItem('themeManuallySet') !== 'true') {
+                setTheme(e.matches ? 'dark' : 'light', 'system');
             }
         });
     </script>

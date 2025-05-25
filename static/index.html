@@ -228,6 +228,17 @@
     </div>
 
     <script>
+        const errorTranslations = {
+            "No selected file": "Bitte wählen Sie eine Datei aus.",
+            "File is not a JPG image": "Ungültiges Dateiformat. Bitte laden Sie ein JPG- oder JPEG-Bild hoch.",
+            "Cannot identify image file. It might be corrupted or not a valid JPG.": "Das Bild konnte nicht verarbeitet werden. Es ist möglicherweise beschädigt oder kein gültiges JPG/JPEG-Format.",
+            "Could not open image": "Das Bild konnte nicht geöffnet werden. Es ist möglicherweise beschädigt.", // Used for errors starting with "Could not open image:"
+            "An unexpected server error occurred.": "Ein unerwarteter Fehler auf dem Server ist aufgetreten. Bitte versuchen Sie es später erneut.",
+            "Rate limit exceeded": "Zu viele Anfragen. Bitte versuchen Sie es später erneut.", // Used for errors starting with "Rate limit exceeded"
+            "generic_client_error": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut oder überprüfen Sie die Browser-Konsole für technische Details."
+            // Note: "generic_network_error" was considered but generic_client_error covers the catch block well.
+        };
+
         document.getElementById('uploadForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
@@ -267,26 +278,33 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    const address = data.address || "nicht verfügbar";
-                    const datetime = data.datetime_original_vienna; // Assuming this is always present on success
-                    const numberPlate = data.number_plate || "nicht verfügbar";
+                    const address = data.address || "***nicht verfügbar***";
+                    const datetime = data.datetime_original_vienna || "***nicht verfügbar***";
+                    const numberPlate = data.number_plate || "***nicht verfügbar***";
 
                     // Format datetime_original_vienna for better readability
-                    let formattedDatetime = datetime;
-                    try {
-                        // Attempt to format the ISO string to a more common German representation
-                        const dateObj = new Date(datetime);
-                        const options = {
-                            year: 'numeric', month: '2-digit', day: '2-digit',
-                            hour: '2-digit', minute: '2-digit', second: '2-digit',
-                            hour12: false // Use 24-hour format
-                        };
-                        // Using German locale for date and time formatting
-                        formattedDatetime = dateObj.toLocaleString('de-DE', options) + " Uhr";
-                    } catch (e) {
-                        console.warn("Could not reformat datetime:", e);
-                        // Fallback to original if formatting fails
-                        formattedDatetime = datetime;
+                    let formattedDatetime;
+                    if (datetime === "***nicht verfügbar***") {
+                        formattedDatetime = "***nicht verfügbar***";
+                    } else {
+                        try {
+                            const dateObj = new Date(datetime);
+                            if (isNaN(dateObj.getTime())) { // Check if date is invalid
+                                formattedDatetime = "***nicht verfügbar***";
+                            } else {
+                                const options = {
+                                    year: 'numeric', month: '2-digit', day: '2-digit',
+                                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                                    hour12: false // Use 24-hour format
+                                };
+                                // Using German locale for date and time formatting
+                                formattedDatetime = dateObj.toLocaleString('de-DE', options) + " Uhr";
+                            }
+                        } catch (e) {
+                            console.warn("Could not reformat datetime:", e);
+                            // Fallback to placeholder if any error during parsing/formatting
+                            formattedDatetime = "***nicht verfügbar***";
+                        }
                     }
 
                     const reportText = `Sehr geehrtes Team der PÜG Wien,
@@ -328,16 +346,34 @@ Mit freundlichen Grüßen`;
                         window.location.href = `mailto:${emailRecipient}?subject=${encodeURIComponent(emailSubject)}&body=${emailBody}`;
                     };
 
-                } else {
-                    errorMessageElement.textContent = `Fehler: ${data.detail || response.statusText}`;
+                } else { // Handle HTTP errors (4xx, 5xx)
+                    const errorKey = data.detail || data.error; // data.error for slowapi, data.detail for our FastAPI HTTPExceptions
+                    let displayErrorMessage;
+
+                    if (errorKey && typeof errorKey === 'string') {
+                        if (errorTranslations[errorKey]) { // Exact match
+                            displayErrorMessage = errorTranslations[errorKey];
+                        } else if (errorKey.startsWith("Could not open image:")) {
+                            displayErrorMessage = errorTranslations["Could not open image"];
+                        } else if (errorKey.startsWith("Rate limit exceeded")) {
+                            displayErrorMessage = errorTranslations["Rate limit exceeded"];
+                        } else {
+                            // Fallback for unknown backend error messages from data.detail or data.error
+                            displayErrorMessage = errorTranslations["An unexpected server error occurred."];
+                        }
+                    } else {
+                        // If no specific error message in JSON, or errorKey is not a string
+                        displayErrorMessage = errorTranslations["An unexpected server error occurred."];
+                    }
+                    errorMessageElement.textContent = displayErrorMessage;
                     responseElement.textContent = '';
                     responseElement.style.display = 'none'; // Ensure hidden on error
                     responseHeaderElement.style.display = 'none'; // Ensure hidden on error
                     emailButton.style.display = 'none';
                 }
-            } catch (error) {
+            } catch (error) { // Handle network errors or other issues preventing request completion
                 console.error('Error:', error);
-                errorMessageElement.textContent = 'Ein unerwarteter Fehler ist aufgetreten. Überprüfen Sie die Konsole.';
+                errorMessageElement.textContent = errorTranslations["generic_client_error"];
                 responseElement.textContent = '';
                 responseElement.style.display = 'none'; // Ensure hidden on error
                 responseHeaderElement.style.display = 'none'; // Ensure hidden on error

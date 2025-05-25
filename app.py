@@ -12,7 +12,7 @@ import io
 import httpx
 import os
 import logging
-from typing import Tuple, Any # For type hinting
+from typing import Tuple, Any
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -58,9 +58,6 @@ GEMINI_PROMPT = (
 )
 
 
-# Pillow's IFDRational objects have .numerator and .denominator
-# We can use a more generic type hint if IFDRational is not directly usable
-# For example, a Protocol or Any. Here, Tuple[Any, Any, Any] for simplicity.
 def get_decimal_from_dms(dms: Tuple[Any, Any, Any], ref: str) -> float:
     """
     Converts GPS coordinates from DMS (Degrees, Minutes, Seconds) format to decimal degrees.
@@ -111,7 +108,7 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
     finally:
         await file.close()
 
-    try: # New try block for the rest of the logic
+    try:  # New try block for the rest of the logic
         # Initialize all potentially EXIF-derived data to None
         vienna_datetime_iso = None
         address_str = None
@@ -124,7 +121,9 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
             logger.info("EXIF data found. Processing...")
             # DateTimeOriginal (tag 36867) is usually in the ExifIFD.
             # The ExifIFD is pointed to by the ExifOffset tag (34665 or 0x8769) from IFD0.
-            EXIF_IFD_POINTER_TAG = 34665  # Tag ID for ExifOffset, which points to the ExifIFD
+            EXIF_IFD_POINTER_TAG = (
+                34665  # Tag ID for ExifOffset, which points to the ExifIFD
+            )
             exif_ifd = exif_data.get_ifd(EXIF_IFD_POINTER_TAG)
 
             datetime_original_str = None
@@ -134,7 +133,9 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
             if datetime_original_str:
                 try:
                     # EXIF datetime format is 'YYYY:MM:DD HH:MM:SS'
-                    naive_datetime = datetime.strptime(datetime_original_str, "%Y:%m:%d %H:%M:%S")
+                    naive_datetime = datetime.strptime(
+                        datetime_original_str, "%Y:%m:%d %H:%M:%S"
+                    )
                     # Assume the naive datetime is local time. Localize it to Vienna.
                     vienna_datetime = VIENNA_TZ.localize(naive_datetime)
                     vienna_datetime_iso = vienna_datetime.isoformat()
@@ -142,13 +143,12 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
                     logger.warning(
                         f"Invalid datetime format in EXIF data: '{datetime_original_str}'. Skipping datetime processing."
                     )
-                    # vienna_datetime_iso remains None as initialized
             else:
-                logger.warning("EXIF DateTimeOriginal tag not found. Skipping datetime processing.")
-                # vienna_datetime_iso remains None as initialized
+                logger.warning(
+                    "EXIF DateTimeOriginal tag not found. Skipping datetime processing."
+                )
 
             # GPS Info Processing
-            # Note: address_str, lat_decimal, lon_decimal were initialized to None earlier
             raw_gps_info = exif_data.get_ifd(GPS_INFO_TAG_ID)
 
             if raw_gps_info:
@@ -169,8 +169,12 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
                     and gps_longitude_ref
                 ):
                     try:
-                        lat_decimal = get_decimal_from_dms(gps_latitude, gps_latitude_ref)
-                        lon_decimal = get_decimal_from_dms(gps_longitude, gps_longitude_ref)
+                        lat_decimal = get_decimal_from_dms(
+                            gps_latitude, gps_latitude_ref
+                        )
+                        lon_decimal = get_decimal_from_dms(
+                            gps_longitude, gps_longitude_ref
+                        )
                     except (TypeError, ZeroDivisionError, IndexError) as e:
                         logger.error(f"Error converting DMS to decimal: {e}")
                         lat_decimal = None
@@ -196,7 +200,11 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
                             street = address_components.get("road")
                             if street:
                                 house_number = address_components.get("house_number")
-                                full_street = f"{street} {house_number}" if house_number else street
+                                full_street = (
+                                    f"{street} {house_number}"
+                                    if house_number
+                                    else street
+                                )
                                 address_parts.append(full_street)
 
                             postcode = address_components.get("postcode")
@@ -232,11 +240,15 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
                         except Exception as e:
                             # Log any other unexpected error during geocoding
                             logger.error(f"Unexpected error during geocoding: {str(e)}")
-            else: # This else corresponds to `if raw_gps_info:`
-                logger.info("GPS metadata (tag GPS_INFO_TAG_ID) not found in EXIF. Skipping GPS processing.")
+            else:  # This else corresponds to `if raw_gps_info:`
+                logger.info(
+                    "GPS metadata (tag GPS_INFO_TAG_ID) not found in EXIF. Skipping GPS processing."
+                )
                 # lat_decimal, lon_decimal, address_str remain None as initialized.
-        else: # This else corresponds to `if exif_data:`
-            logger.warning("No EXIF data found in the image. Skipping all EXIF-dependent processing.")
+        else:  # This else corresponds to `if exif_data:`
+            logger.warning(
+                "No EXIF data found in the image. Skipping all EXIF-dependent processing."
+            )
             # vienna_datetime_iso, address_str, lat_decimal, lon_decimal remain None as initialized.
 
         # Number Plate Extraction with Gemini
@@ -250,15 +262,22 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
                 response = generate(image_bytes, GOOGLE_API_KEY)
 
                 extracted_text = response.text.strip() if response.text else ""
-                if extracted_text and extracted_text.upper() != GEMINI_NO_PLATE_RESPONSE.upper():
+                if (
+                    extracted_text
+                    and extracted_text.upper() != GEMINI_NO_PLATE_RESPONSE.upper()
+                ):
                     number_plate_str = extracted_text
                 else:
-                    number_plate_str = None  # Default to None for N/A, empty, or whitespace-only
+                    number_plate_str = (
+                        None  # Default to None for N/A, empty, or whitespace-only
+                    )
                     if not response.text:
                         logger.warning(
                             "Gemini response for number plate was empty or had no text part."
                         )
-                    elif not extracted_text: # response.text was not empty but became empty after strip
+                    elif (
+                        not extracted_text
+                    ):  # response.text was not empty but became empty after strip
                         logger.warning(
                             "Gemini response for number plate consisted of only whitespace."
                         )
@@ -296,15 +315,16 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
         # ValueError from strptime is now handled inline within the EXIF processing block.
         # The generic Exception handler remains.
     except Exception as e:
-        logger.error(f"An unexpected error occurred in extract_info: {str(e)}", exc_info=True)
+        logger.error(
+            f"An unexpected error occurred in extract_info: {str(e)}", exc_info=True
+        )
         raise HTTPException(
-            status_code=500, detail="An unexpected server error occurred." # Avoid leaking raw error details
+            status_code=500,
+            detail="An unexpected server error occurred.",  # Avoid leaking raw error details
         )
 
 
-def generate(
-    image_data: bytes, api_key: str
-) -> types.GenerateContentResponse:
+def generate(image_data: bytes, api_key: str) -> types.GenerateContentResponse:
     client = genai.Client(
         api_key=api_key,
     )

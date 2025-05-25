@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-T-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Falschparker melden</title>
+    <title>Falschparker in Wien melden</title>
     <style>
         :root {
             --background-color: #f4f4f9;
@@ -212,17 +212,17 @@
         </label>
     </div>
     <div class="container">
-        <h1>Falschparker melden</h1>
+        <h1>Falschparker in Wien melden</h1>
         <form id="uploadForm">
-            <label for="fileInput">Choose a JPG image</label>
+            <label for="fileInput">JPG-Bild auswählen</label>
             <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg" required>
-            <button type="submit" id="submitButton">Extract info</button>
+            <button type="submit" id="submitButton">Infos extrahieren</button>
         </form>
         <div id="loadingSpinner" style="display: none;"></div> <!-- Spinner Element -->
         <div id="responseArea">
             <h2 id="responseHeader" style="display: none;">E-Mail</h2>
             <pre id="response" style="display: none;"></pre>
-            <button id="openEmailClientButton" class="action-button">Open in Email Client</button>
+            <button id="openEmailClientButton" class="action-button">In E-Mail-Programm öffnen</button>
             <p id="errorMessage" class="error"></p>
         </div>
     </div>
@@ -248,7 +248,7 @@
             loadingSpinner.style.display = 'none';
 
             if (!fileInput.files.length) {
-                errorMessageElement.textContent = 'Please select a file.';
+                errorMessageElement.textContent = 'Bitte wählen Sie eine Datei aus.';
                 return;
             }
 
@@ -329,7 +329,7 @@ Mit freundlichen Grüßen`;
                     };
 
                 } else {
-                    errorMessageElement.textContent = `Error: ${data.detail || response.statusText}`;
+                    errorMessageElement.textContent = `Fehler: ${data.detail || response.statusText}`;
                     responseElement.textContent = '';
                     responseElement.style.display = 'none'; // Ensure hidden on error
                     responseHeaderElement.style.display = 'none'; // Ensure hidden on error
@@ -337,7 +337,7 @@ Mit freundlichen Grüßen`;
                 }
             } catch (error) {
                 console.error('Error:', error);
-                errorMessageElement.textContent = 'An unexpected error occurred. Check the console.';
+                errorMessageElement.textContent = 'Ein unerwarteter Fehler ist aufgetreten. Überprüfen Sie die Konsole.';
                 responseElement.textContent = '';
                 responseElement.style.display = 'none'; // Ensure hidden on error
                 responseHeaderElement.style.display = 'none'; // Ensure hidden on error

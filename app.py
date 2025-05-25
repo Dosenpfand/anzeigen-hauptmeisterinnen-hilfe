@@ -14,8 +14,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = FastAPI()
-
-# Mount static files directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 try:
@@ -152,11 +150,8 @@ async def extract_info(file: UploadFile = File(...)):
                 # Reverse geocode using Nominatim if coordinates are valid
                 if lat_decimal is not None and lon_decimal is not None:
                     nominatim_url = f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat_decimal}&lon={lon_decimal}&accept-language=de"
-
-                    # TODO: Customize User-Agent for your application as per Nominatim's Usage Policy
-                    # See: https://operations.osmfoundation.org/policies/nominatim/
                     headers = {
-                        "User-Agent": "FalschparkerApp/0.1 (contact@example.com)"
+                        "User-Agent": "FalschparkerApp/0.1 (falschparker@sad.bz)"
                     }
 
                     try:

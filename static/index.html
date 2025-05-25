@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-T-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Info Extractor</title>
+    <title>Falschparker melden</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -100,15 +100,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚗Falschparker melden🅿️</h1>
+        <h1>Falschparker melden🅿</h1>
         <form id="uploadForm">
             <label for="fileInput">Choose a JPG image</label>
             <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg" required>
-            <button type="submit" id="submitButton">Extract info and create email</button>
+            <button type="submit" id="submitButton">Extract info</button>
         </form>
         <div id="loadingSpinner" style="display: none;"></div> <!-- Spinner Element -->
         <div id="responseArea">
-            <h2 id="responseHeader" style="display: none;">Response:</h2>
+            <h2 id="responseHeader" style="display: none;">E-Mail</h2>
             <pre id="response" style="display: none;"></pre>
             <button id="openEmailClientButton" class="action-button">Open in Email Client</button>
             <p id="errorMessage" class="error"></p>
@@ -181,7 +181,7 @@
 hiermit möchte ich einen Falschparker melden.
 
 Ort: ${address}
-Datum und Uhzeit: ${formattedDatetime}
+Datum und Uhrzeit: ${formattedDatetime}
 Fahrzeugkennzeichen: ${numberPlate}
 Fotos: Im Anhang
 

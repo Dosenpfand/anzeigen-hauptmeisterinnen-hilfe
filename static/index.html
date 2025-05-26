@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-T-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Falschparker in Wien melden</title>
+    <title>Anzeigen-Hauptmeister*innen-Hilfe</title>
     <style>
         :root {
             --background-color: #f4f4f9;
@@ -39,7 +39,7 @@
             --action-button-hover-background-color: #218838;
             --response-background-color: #2c2c2c;
             --response-border-color: #444;
-            --header-color: #3aa0ff; /* Lighter blue for dark theme */
+            --header-color: #3aa0ff;
             --spinner-border-light: #444;
             --spinner-border-top: #3aa0ff;
             --toggle-slider-background: #555;
@@ -64,6 +64,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 600px;
+            margin-top: 15px;
             transition: background-color 0.3s;
         }
         [data-theme="dark"] .container {
@@ -75,7 +76,29 @@
             margin-bottom: 20px;
             transition: color 0.3s;
         }
-        label { /* Applies to form labels */
+        h2.subtitle {
+            color: var(--text-color);
+            text-align: center;
+            margin-top: -10px;
+            margin-bottom: 25px;
+            font-size: 1.2em;
+            font-weight: normal;
+            transition: color 0.3s;
+        }
+        .explanation {
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            transition: color 0.3s;
+            padding-left: 20px;
+        }
+        .explanation li {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
@@ -90,9 +113,32 @@
             background-color: var(--input-background-color);
             color: var(--text-color);
             border-radius: 4px;
-            width: calc(100% - 22px); /* Account for padding and border */
+            width: calc(100% - 22px);
             transition: border-color 0.3s, background-color 0.3s, color 0.3s;
         }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .form-row label {
+            display: inline;
+            margin-bottom: 0;
+            margin-right: 10px;
+        }
+
+        .form-row input[type="checkbox"] {
+            margin-right: 5px;
+            margin-left: 0;
+            flex-shrink: 0;
+        }
+
+        .form-row label[for="termsCheckbox"] {
+            margin-right: 0;
+        }
+
         button {
             background-color: var(--button-background-color);
             color: var(--button-text-color);
@@ -108,7 +154,7 @@
         }
         .action-button {
             background-color: var(--action-button-background-color);
-            color: var(--button-text-color); /* Assuming same text color as other buttons */
+            color: var(--button-text-color);
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
@@ -116,7 +162,7 @@
             font-size: 16px;
             transition: background-color 0.3s ease;
             margin-top: 15px;
-            display: none; /* Hidden by default */
+            display: none;
         }
         .action-button:hover {
             background-color: var(--action-button-hover-background-color);
@@ -134,7 +180,7 @@
             transition: background-color 0.3s, border-color 0.3s, color 0.3s;
         }
         .error {
-            color: red; /* Keeping red for errors as it stands out */
+            color: red;
             margin-top: 10px;
         }
         #loadingSpinner {
@@ -152,17 +198,16 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Theme toggle switch styles */
         .theme-switch-wrapper {
             display: flex;
             align-items: center;
             position: absolute;
             top: 15px;
-            right: 15px;
+            right: 8px;
         }
-        .theme-switch-wrapper label { /* Styles the "Dark Mode" text */
+        .theme-switch-wrapper label {
             margin-right: 8px;
-            font-weight: normal; /* Override bold from general label style if desired */
+            font-weight: normal;
         }
         .theme-switch {
             display: inline-block;
@@ -201,56 +246,154 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
+
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: var(--container-background);
+            color: var(--text-color);
+            margin: auto;
+            padding: 20px;
+            border: 1px solid var(--input-border-color);
+            border-radius: 8px;
+            width: 80%;
+            max-width: 700px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-content h2 {
+            color: var(--header-color);
+            margin-top: 0;
+        }
+        .modal-content a {
+            color: var(--header-color);
+        }
+        .close-button {
+            color: var(--text-color);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #ff0000;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="theme-switch-wrapper">
-        <label for="themeSwitch">☀️🌑</label> <!-- This label makes the text "Dark Mode" clickable -->
-        <label class="theme-switch" for="themeSwitch"> <!-- This new label makes the visual slider part clickable -->
+        <label for="themeSwitch">☀️🌑</label>
+        <label class="theme-switch" for="themeSwitch">
             <input type="checkbox" id="themeSwitch">
             <span class="slider round"></span>
         </label>
     </div>
     <div class="container">
-        <h1>Falschparker in Wien melden</h1>
+        <h1>Anzeigen-Hauptmeister*innen-Hilfe</h1>
+        <h2 class="subtitle">Falsch geparkte Fahrzeuge in Wien melden</h2>
+        <ol class="explanation">
+            <li>📸 Lade ein Foto von einem falsch geparkten Auto hoch.</li>
+            <li>⚙️ Wir extrahieren Datum, Ort sowie Kennzeichen für dich.</li>
+            <li>📧 Erhalte eine E-Mail-Vorlage an die Parkraumüberwachung der MA 67.</li>
+        </ol>
         <form id="uploadForm">
-            <label for="fileInput">JPG-Bild auswählen</label>
             <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg" required>
+
+            <div class="form-row" style="font-size: 0.9em;">
+                <input type="checkbox" id="termsCheckbox" name="terms" required>
+                <label for="termsCheckbox" style="font-weight: normal;">Ich akzeptiere die <a href="#" id="termsLink" style="color: var(--header-color);">Nutzungsbedingungen</a>.</label>
+            </div>
+
             <button type="submit" id="submitButton">Infos extrahieren</button>
         </form>
-        <div id="loadingSpinner" style="display: none;"></div> <!-- Spinner Element -->
+
+        <div id="termsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Nutzungsbedingungen</h2>
+                <p>Wir speichern keine personenbezogenen Daten von dir direkt auf unseren Servern über den unmittelbaren Verarbeitungsvorgang hinaus.</p>
+                <p>Das von dir hochgeladene Foto wird zur Analyse (z.B. Kennzeichenerkennung) an Google Gemini (Vertex AI), einen Dienst von Google, weitergeleitet und dort verarbeitet. Durch das Hochladen des Bildes und die Nutzung dieses Dienstes stimmst du dieser Verarbeitung zu.</p>
+                <p>Bitte beachte die Datenschutzbestimmungen von Google und Google Cloud:</p>
+                <ul>
+                    <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Datenschutzerklärung</a></li>
+                    <li><a href="https://cloud.google.com/terms/cloud-privacy-notice" target="_blank" rel="noopener noreferrer">Google Cloud Datenschutzerklärung</a></li>
+                </ul>
+                <p>Durch Anklicken der Checkbox "Nutzungsbedingungen akzeptieren" bestätigst du, dass du diese Bedingungen zur Kenntnis genommen hast und akzeptierst.</p>
+            </div>
+        </div>
+
+        <div id="loadingSpinner" style="display: none;"></div>
         <div id="responseArea">
-            <h2 id="responseHeader" style="display: none;">E-Mail</h2>
+            <h2 id="responseHeader" style="display: none;">E-Mail-Entwurf</h2>
             <pre id="response" style="display: none;"></pre>
-            <button id="openEmailClientButton" class="action-button">In E-Mail-Programm öffnen</button>
+            <button id="openEmailClientButton" class="action-button">In deinem E-Mail-Programm öffnen</button>
             <p id="errorMessage" class="error"></p>
         </div>
     </div>
 
     <script>
         const errorTranslations = {
-            "No selected file": "Bitte wählen Sie eine Datei aus.",
-            "File is not a JPG image": "Ungültiges Dateiformat. Bitte laden Sie ein JPG- oder JPEG-Bild hoch.",
+            "No selected file": "Bitte wähle eine Datei aus.",
+            "File is not a JPG image": "Ungültiges Dateiformat. Bitte lade ein JPG- oder JPEG-Bild hoch.",
             "Cannot identify image file. It might be corrupted or not a valid JPG.": "Das Bild konnte nicht verarbeitet werden. Es ist möglicherweise beschädigt oder kein gültiges JPG/JPEG-Format.",
-            "Could not open image": "Das Bild konnte nicht geöffnet werden. Es ist möglicherweise beschädigt.", // Used for errors starting with "Could not open image:"
-            "An unexpected server error occurred.": "Ein unerwarteter Fehler auf dem Server ist aufgetreten. Bitte versuchen Sie es später erneut.",
-            "Rate limit exceeded": "Zu viele Anfragen. Bitte versuchen Sie es später erneut.", // Used for errors starting with "Rate limit exceeded"
-            "generic_client_error": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut oder überprüfen Sie die Browser-Konsole für technische Details."
-            // Note: "generic_network_error" was considered but generic_client_error covers the catch block well.
+            "Could not open image": "Das Bild konnte nicht geöffnet werden. Es ist möglicherweise beschädigt.",
+            "An unexpected server error occurred.": "Ein unerwarteter Fehler auf dem Server ist aufgetreten. Bitte versuche es später erneut.",
+            "Rate limit exceeded": "Zu viele Anfragen. Bitte versuche es später erneut.",
+            "generic_client_error": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später erneut oder überprüfe die Browser-Konsole für technische Details.",
+            "terms_not_accepted": "Bitte akzeptiere die Nutzungsbedingungen, um fortzufahren."
         };
+
+        const termsModal = document.getElementById('termsModal');
+        const termsLink = document.getElementById('termsLink');
+        const closeButton = document.querySelector('.close-button');
+
+        if (termsLink) {
+            termsLink.onclick = function(e) {
+                e.preventDefault();
+                termsModal.style.display = 'flex';
+            }
+        }
+
+        if (closeButton) {
+            closeButton.onclick = function() {
+                termsModal.style.display = 'none';
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target == termsModal) {
+                termsModal.style.display = 'none';
+            }
+        }
 
         document.getElementById('uploadForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
             const fileInput = document.getElementById('fileInput');
             const responseElement = document.getElementById('response');
-            const responseHeaderElement = document.getElementById('responseHeader'); // Get the header
+            const responseHeaderElement = document.getElementById('responseHeader');
             const errorMessageElement = document.getElementById('errorMessage');
             const emailButton = document.getElementById('openEmailClientButton');
             const submitButton = document.getElementById('submitButton');
             const loadingSpinner = document.getElementById('loadingSpinner');
+            const termsCheckbox = document.getElementById('termsCheckbox');
 
-            // Reset UI
             responseElement.textContent = '';
             responseElement.style.display = 'none';
             responseHeaderElement.style.display = 'none';
@@ -259,7 +402,12 @@
             loadingSpinner.style.display = 'none';
 
             if (!fileInput.files.length) {
-                errorMessageElement.textContent = 'Bitte wählen Sie eine Datei aus.';
+                errorMessageElement.textContent = errorTranslations["No selected file"];
+                return;
+            }
+
+            if (!termsCheckbox.checked) {
+                errorMessageElement.textContent = errorTranslations["terms_not_accepted"];
                 return;
             }
 
@@ -267,8 +415,8 @@
             formData.append('file', fileInput.files[0]);
 
             try {
-                loadingSpinner.style.display = 'block'; // Show spinner
-                submitButton.disabled = true; // Disable submit button
+                loadingSpinner.style.display = 'block';
+                submitButton.disabled = true;
 
                 const response = await fetch('/extract_info/', {
                     method: 'POST',
@@ -282,27 +430,24 @@
                     const datetime = data.datetime_original_vienna || "***nicht verfügbar***";
                     const numberPlate = data.number_plate || "***nicht verfügbar***";
 
-                    // Format datetime_original_vienna for better readability
                     let formattedDatetime;
                     if (datetime === "***nicht verfügbar***") {
                         formattedDatetime = "***nicht verfügbar***";
                     } else {
                         try {
                             const dateObj = new Date(datetime);
-                            if (isNaN(dateObj.getTime())) { // Check if date is invalid
+                            if (isNaN(dateObj.getTime())) {
                                 formattedDatetime = "***nicht verfügbar***";
                             } else {
                                 const options = {
                                     year: 'numeric', month: '2-digit', day: '2-digit',
                                     hour: '2-digit', minute: '2-digit', second: '2-digit',
-                                    hour12: false // Use 24-hour format
+                                    hour12: false
                                 };
-                                // Using German locale for date and time formatting
                                 formattedDatetime = dateObj.toLocaleString('de-DE', options) + " Uhr";
                             }
                         } catch (e) {
                             console.warn("Could not reformat datetime:", e);
-                            // Fallback to placeholder if any error during parsing/formatting
                             formattedDatetime = "***nicht verfügbar***";
                         }
                     }
@@ -315,29 +460,26 @@ Datum und Uhrzeit: ${formattedDatetime}
 Fahrzeugkennzeichen: ${numberPlate}
 Fotos: Im Anhang
 
-Für Rückfragen stehe ich selbstverständliche gerne per E-Mail zur Verfügung.
+Für Rückfragen stehe ich selbstverständlich gerne per E-Mail zur Verfügung.
 
 Mit freundlichen Grüßen`;
-                    responseHeaderElement.style.display = 'block'; // Show header
-                    responseElement.style.display = 'block'; // Show pre tag
+                    responseHeaderElement.style.display = 'block';
+                    responseElement.style.display = 'block';
                     responseElement.textContent = reportText;
-                    emailButton.style.display = 'block'; // Show the email button
+                    emailButton.style.display = 'block';
 
-                    // Add or update event listener for the email button
-                    emailButton.onclick = function() { // Use onclick for simplicity or manage listeners carefully
+                    emailButton.onclick = function() {
                         const emailRecipient = 'rechtsmittel@ma67.wien.gv.at';
 
-                        // Format date for subject (e.g., DD.MM.YYYY)
                         let subjectDate = '';
                         try {
                             const dateObj = new Date(datetime);
                             const day = String(dateObj.getDate()).padStart(2, '0');
-                            const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+                            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                             const year = dateObj.getFullYear();
                             subjectDate = `${day}.${month}.${year}`;
                         } catch (e) {
                             console.warn("Could not format date for subject:", e);
-                            // Fallback to a generic part of the datetime string if formatting fails
                             subjectDate = datetime.split('T')[0];
                         }
 
@@ -346,40 +488,38 @@ Mit freundlichen Grüßen`;
                         window.location.href = `mailto:${emailRecipient}?subject=${encodeURIComponent(emailSubject)}&body=${emailBody}`;
                     };
 
-                } else { // Handle HTTP errors (4xx, 5xx)
-                    const errorKey = data.detail || data.error; // data.error for slowapi, data.detail for our FastAPI HTTPExceptions
+                } else {
+                    const errorKey = data.detail || data.error;
                     let displayErrorMessage;
 
                     if (errorKey && typeof errorKey === 'string') {
-                        if (errorTranslations[errorKey]) { // Exact match
+                        if (errorTranslations[errorKey]) {
                             displayErrorMessage = errorTranslations[errorKey];
                         } else if (errorKey.startsWith("Could not open image:")) {
                             displayErrorMessage = errorTranslations["Could not open image"];
                         } else if (errorKey.startsWith("Rate limit exceeded")) {
                             displayErrorMessage = errorTranslations["Rate limit exceeded"];
                         } else {
-                            // Fallback for unknown backend error messages from data.detail or data.error
                             displayErrorMessage = errorTranslations["An unexpected server error occurred."];
                         }
                     } else {
-                        // If no specific error message in JSON, or errorKey is not a string
                         displayErrorMessage = errorTranslations["An unexpected server error occurred."];
                     }
                     errorMessageElement.textContent = displayErrorMessage;
                     responseElement.textContent = '';
-                    responseElement.style.display = 'none'; // Ensure hidden on error
-                    responseHeaderElement.style.display = 'none'; // Ensure hidden on error
+                    responseElement.style.display = 'none';
+                    responseHeaderElement.style.display = 'none';
                     emailButton.style.display = 'none';
                 }
-            } catch (error) { // Handle network errors or other issues preventing request completion
+            } catch (error) {
                 console.error('Error:', error);
                 errorMessageElement.textContent = errorTranslations["generic_client_error"];
                 responseElement.textContent = '';
-                responseElement.style.display = 'none'; // Ensure hidden on error
-                responseHeaderElement.style.display = 'none'; // Ensure hidden on error
+                responseElement.style.display = 'none';
+                responseHeaderElement.style.display = 'none';
             } finally {
-                loadingSpinner.style.display = 'none'; // Hide spinner
-                submitButton.disabled = false; // Re-enable submit button
+                loadingSpinner.style.display = 'none';
+                submitButton.disabled = false;
             }
         });
     </script>
@@ -395,43 +535,32 @@ Mit freundlichen Grüßen`;
          */
         function setTheme(theme, source = 'auto') {
             document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme); // Always store the current theme
+            localStorage.setItem('theme', theme);
             themeSwitch.checked = theme === 'dark';
 
             if (source === 'manual') {
                 localStorage.setItem('themeManuallySet', 'true');
             } else if (source === 'system') {
-                // If theme is set by system (initial or subsequent change),
-                // it means any prior manual setting is now superseded by system preference
-                // (because this branch is only hit if 'themeManuallySet' was not 'true' prior).
                 localStorage.removeItem('themeManuallySet');
             }
-            // If source === 'auto' (e.g. initial load from localStorage based on a previous manual set):
-            // - If localStorage.themeManuallySet was 'true', it remains 'true'.
-            // - If localStorage.themeManuallySet was not 'true', it remains not 'true'.
-            // So, no explicit action needed for 'themeManuallySet' when source is 'auto' here.
         }
 
-        // Initialize theme
         const manuallySetPreviously = localStorage.getItem('themeManuallySet') === 'true';
         const currentSavedTheme = localStorage.getItem('theme');
 
         if (manuallySetPreviously && currentSavedTheme) {
-            setTheme(currentSavedTheme, 'auto'); // Restore theme, maintaining manual preference status
+            setTheme(currentSavedTheme, 'auto');
         } else if (prefersDarkScheme.matches) {
-            setTheme('dark', 'system');          // Set based on system preference
+            setTheme('dark', 'system');
         } else {
-            setTheme('light', 'system');         // Default to light, set by system logic
+            setTheme('light', 'system');
         }
 
-        // Listener for toggle switch
         themeSwitch.addEventListener('change', function(event) {
             setTheme(event.target.checked ? 'dark' : 'light', 'manual');
         });
 
-        // Listener for changes in system preference
         prefersDarkScheme.addEventListener('change', (e) => {
-            // Only apply system preference if a theme hasn't been manually set by the user.
             if (localStorage.getItem('themeManuallySet') !== 'true') {
                 setTheme(e.matches ? 'dark' : 'light', 'system');
             }

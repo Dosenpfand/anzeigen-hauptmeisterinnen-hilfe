@@ -11,8 +11,7 @@ services:
       - RATE_LIMIT_HOURS=${RATE_LIMIT_HOURS:-10}
     env_file:
       - .env
-    # For development, you might want to mount your code for live reloading.
-    # For production, the code is copied into the image, so this is not strictly needed.
-    # volumes:
-    #   - ./app.py:/app/app.py
-    #   - ./static:/app/static
+    # For development
+    volumes:
+      - ./app.py:/app/app.py
+      - ./static:/app/static

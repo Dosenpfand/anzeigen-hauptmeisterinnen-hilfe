@@ -403,6 +403,17 @@
             }
         }
 
+        const termsCheckbox = document.getElementById('termsCheckbox');
+        const TERMS_ACCEPTED_KEY = 'termsAccepted';
+
+        if (localStorage.getItem(TERMS_ACCEPTED_KEY) === 'true') {
+            termsCheckbox.checked = true;
+        }
+
+        termsCheckbox.addEventListener('change', function() {
+            localStorage.setItem(TERMS_ACCEPTED_KEY, termsCheckbox.checked);
+        });
+
         document.getElementById('uploadForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 
@@ -413,7 +424,6 @@
             const emailButton = document.getElementById('openEmailClientButton');
             const submitButton = document.getElementById('submitButton');
             const loadingSpinner = document.getElementById('loadingSpinner');
-            const termsCheckbox = document.getElementById('termsCheckbox');
 
             responseElement.textContent = '';
             responseElement.style.display = 'none';

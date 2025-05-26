@@ -1,10 +1,12 @@
-# FalschparkerApp
+# Anzeigen-Hauptmeister*innen-Hilfe
 
 ## Description
 
-FalschparkerApp is a web application specifically designed to assist users in Vienna, Austria, with reporting wrongly parked vehicles. It extracts information from images of vehicles, focusing on identifying license plates and retrieving EXIF data such as GPS location and the time the photo was taken.
+Anzeigen-Hauptmeister*innen-Hilfe is a web application specifically designed to assist users in Vienna, Austria, with reporting wrongly parked vehicles. It extracts information from images of vehicles, focusing on identifying license plates and retrieving EXIF data such as GPS location and the time the photo was taken.
 
 The application uses Google's Gemini AI to analyze images for license plates and Nominatim for reverse geocoding GPS coordinates. The timezone for EXIF data is set to Vienna ("Europe/Vienna").
+
+A live instance of the application is available at: [falschparker.sad.bz](https://falschparker.sad.bz)
 
 ## Features
 

@@ -47,6 +47,21 @@
             --toggle-slider-knob-background: #e0e0e0;
         }
 
+        .source-code-link {
+            text-align: right;
+            margin-top: 20px;
+            font-size: 0.8em;
+        }
+
+        .source-code-link a {
+            color: gray;
+            text-decoration: none;
+        }
+
+        .source-code-link a:hover {
+            text-decoration: underline;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 40px;
@@ -309,7 +324,7 @@
         <h2 class="subtitle">Falsch geparkte Fahrzeuge in Wien melden</h2>
         <ol class="explanation">
             <li>📸 Lade ein Foto von einem falsch geparkten Auto hoch.</li>
-            <li>⚙️ Wir extrahieren Datum, Ort sowie Kennzeichen für dich.</li>
+            <li>⚙️ Datum, Ort sowie Kennzeichen werden extrahiert.</li>
             <li>📧 Erhalte eine E-Mail-Vorlage an die Parkraumüberwachung der MA 67.</li>
         </ol>
         <form id="uploadForm">
@@ -344,6 +359,12 @@
             <pre id="response" style="display: none;"></pre>
             <button id="openEmailClientButton" class="action-button">In deinem E-Mail-Programm öffnen</button>
             <p id="errorMessage" class="error"></p>
+        </div>
+
+        <div class="source-code-link">
+            <a href="https://github.com/Dosenpfand/falschparker" target="_blank" rel="noopener noreferrer">Quellcode</a>
+            &nbsp;|&nbsp;
+            <a href="mailto:falschparker@sad.bz">Kontakt</a>
         </div>
     </div>
 

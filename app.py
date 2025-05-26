@@ -46,6 +46,7 @@ if not GOOGLE_API_KEY:
 EXIF_DATETIME_ORIGINAL_TAG = 36867
 GPS_INFO_TAG_ID = 34853
 VIENNA_TZ = pytz.timezone("Europe/Vienna")
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat_decimal}&lon={lon_decimal}&accept-language=de"
 NOMINATIM_USER_AGENT = "FalschparkerApp/0.1 (falschparker@sad.bz)"
 GEMINI_NO_PLATE_RESPONSE = "N/A"
 GEMINI_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
@@ -182,7 +183,7 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
 
                     # Reverse geocode using Nominatim if coordinates are valid
                     if lat_decimal is not None and lon_decimal is not None:
-                        nominatim_url = f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat_decimal}&lon={lon_decimal}&accept-language=de"
+                        nominatim_url = NOMINATIM_URL.format(lat_decimal, lon_decimal)
                         headers = {"User-Agent": NOMINATIM_USER_AGENT}
 
                         try:

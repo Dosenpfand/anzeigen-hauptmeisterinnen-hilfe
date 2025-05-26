@@ -64,6 +64,10 @@ The application can be configured using environment variables:
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue.
 
+## Acknowledgements
+
+This project has been realized 95% by vibe coding.
+
 ## License
 
 This project is licensed under the [LICENSE](./LICENSE) file.

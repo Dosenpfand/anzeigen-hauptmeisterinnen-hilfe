@@ -30,7 +30,13 @@ RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "20"))
 RATE_LIMIT_HOURS = int(os.getenv("RATE_LIMIT_HOURS", "10"))
 rate_limit_str = f"{RATE_LIMIT_REQUESTS}/{RATE_LIMIT_HOURS}hour"
 
-limiter = Limiter(key_func=get_remote_address, default_limits=[rate_limit_str])
+def get_client_ip(request: Request) -> str:
+    x_real_ip = request.headers.get("X-Real-IP")
+    if x_real_ip:
+        return x_real_ip
+    return get_remote_address(request)
+
+limiter = Limiter(key_func=get_client_ip, default_limits=[rate_limit_str])
 app = FastAPI()
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

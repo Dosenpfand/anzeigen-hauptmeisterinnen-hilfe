@@ -13,8 +13,7 @@ import httpx
 import os
 import logging
 from typing import Tuple, Any, Optional, Protocol
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from dotenv import load_dotenv
 
 # Configure logging
@@ -43,10 +42,10 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
     logger.warning(
-        "GOOGLE_API_KEY environment variable not set. Number plate extraction will fail."
+        "OPENROUTER_API_KEY environment variable not set. Number plate extraction will fail."
     )
 
 EXIF_DATETIME_ORIGINAL_TAG = 36867
@@ -55,7 +54,7 @@ VIENNA_TZ = pytz.timezone("Europe/Vienna")
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat_decimal}&lon={lon_decimal}&accept-language=de"
 NOMINATIM_USER_AGENT = "FalschparkerApp/0.1 (falschparker@sad.bz)"
 GEMINI_NO_PLATE_RESPONSE = "N/A"
-GEMINI_MODEL_NAME = "gemini-2.5-flash-preview-05-20"
+GEMINI_MODEL_NAME = "google/gemini-2.0-flash-lite-001"
 GEMINI_PROMPT = (
     "Analyze this image and extract the vehicle number plate. "
     "The image contains a car. Focus on identifying the number plate text. "
@@ -254,7 +253,7 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
 
         # Number Plate Extraction
         image_bytes = img_stream.getvalue()
-        number_plate_str = _extract_number_plate_from_image_data(image_bytes, GOOGLE_API_KEY)
+        number_plate_str = _extract_number_plate_from_image_data(image_bytes, OPENROUTER_API_KEY)
 
         # Prepare response data
         response_payload = {"filename": file.filename} # file.filename is safe due to _load_image_from_upload validation
@@ -284,46 +283,58 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
 
 def _call_gemini_for_number_plate(
     image_data: bytes, api_key: str
-) -> types.GenerateContentResponse:
-    """Calls the Gemini API to analyze an image for number plates."""
-    client = genai.Client(api_key=api_key)
-    model = GEMINI_MODEL_NAME
-    prompt = GEMINI_PROMPT
-    contents = [
-        types.Content(
-            role="user",
-            parts=[
-                types.Part.from_bytes(mime_type="image/jpeg", data=image_data),
-                types.Part.from_text(text=prompt),
-            ],
-        ),
-    ]
-    generate_content_config = types.GenerateContentConfig(
-        thinking_config=types.ThinkingConfig(thinking_budget=0),
-        response_mime_type="text/plain",
+) -> str:
+    """Calls the Gemini API via OpenRouter to analyze an image for number plates."""
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
     )
-    return client.models.generate_content(
-        model=model, contents=contents, config=generate_content_config
+
+    import base64
+    base64_image = base64.b64encode(image_data).decode('utf-8')
+
+    response = client.chat.completions.create(
+        model=GEMINI_MODEL_NAME,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": GEMINI_PROMPT
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}"
+                        }
+                    }
+                ]
+            }
+        ],
+        max_tokens=100
     )
+
+    return response.choices[0].message.content
 
 
 def _extract_number_plate_from_image_data(
     image_bytes: bytes, api_key: Optional[str]
 ) -> Optional[str]:
-    """Extracts number plate from image bytes using Gemini API."""
+    """Extracts number plate from image bytes using Gemini API via OpenRouter."""
     if not api_key:
-        logger.info("Skipping number plate extraction as GOOGLE_API_KEY is not set.")
+        logger.info("Skipping number plate extraction as OPENROUTER_API_KEY is not set.")
         return None
 
     try:
-        response = _call_gemini_for_number_plate(image_bytes, api_key)
-        extracted_text = response.text.strip() if response.text else ""
+        response_text = _call_gemini_for_number_plate(image_bytes, api_key)
+        extracted_text = response_text.strip() if response_text else ""
 
         if extracted_text and extracted_text.upper() != GEMINI_NO_PLATE_RESPONSE.upper():
             return extracted_text
 
         # Log reasons for not returning a plate if it's N/A or empty
-        if not response.text:
+        if not response_text:
             logger.warning("Gemini response for number plate was empty or had no text part.")
         elif not extracted_text:
             logger.warning("Gemini response for number plate consisted of only whitespace.")

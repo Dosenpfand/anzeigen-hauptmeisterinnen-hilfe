@@ -32,9 +32,9 @@ A live instance of the application is available at: [falschparker.sad.bz](https:
     ```
 
 2.  **Set up environment variables:**
-    Create a `.env` file in the root directory and add your Google API key:
+    Create a `.env` file in the root directory and add your OpenRouter API key:
     ```env
-    GOOGLE_API_KEY=your_google_api_key_here
+    OPENROUTER_API_KEY=your_openrouter_api_key_here
     ```
 
 3.  **Build and run with Docker Compose:**
@@ -55,7 +55,7 @@ The API endpoint for extracting information is `/extract_info/`.
 
 The application can be configured using environment variables:
 
-*   `GOOGLE_API_KEY`: Your Google API Key for Gemini.
+*   `OPENROUTER_API_KEY`: Your Google API Key for Gemini.
 *   `RATE_LIMIT_REQUESTS`: Maximum number of requests allowed within the rate limit window. (Default: 20)
 *   `RATE_LIMIT_HOURS`: The duration of the rate limit window in hours. (Default: 10)
 *   `NOMINATIM_USER_AGENT`: User agent string for Nominatim API requests. (Default: "FalschparkerApp/0.1 (falschparker@sad.bz)")

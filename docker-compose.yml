@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # - GOOGLE_API_KEY=${GOOGLE_API_KEY} # Set this in a .env file or your environment
+      # - OPENROUTER_API_KEY=${OPENROUTER_API_KEY} # Set this in a .env file or your environment
       - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-20}
       - RATE_LIMIT_HOURS=${RATE_LIMIT_HOURS:-10}
     env_file:

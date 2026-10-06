@@ -54,9 +54,9 @@ VIENNA_TZ = pytz.timezone("Europe/Vienna")
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat_decimal}&lon={lon_decimal}&accept-language=de"
 NOMINATIM_USER_AGENT = "FalschparkerApp/0.1 (falschparker@sad.bz)"
 GEMINI_NO_PLATE_RESPONSE = "N/A"
-GEMINI_MODEL_NAME = "google/gemini-3.8-flash"
+GEMINI_MODEL_NAME = "google/gemini-3.5-flash-lite"
 GEMINI_FALLBACK_MODEL_NAMES = [
-    "google/gemini-3.5-flash-lite",
+    "google/gemini-3.8-flash",
     "google/gemini-3.1-flash-lite",
     "google/gemini-2.5-flash-lite",
 ]
@@ -315,7 +315,7 @@ def _call_gemini_for_number_plate(
     for model_name in [GEMINI_MODEL_NAME, *GEMINI_FALLBACK_MODEL_NAMES]:
         try:
             response = client.chat.completions.create(
-                model=model_name, messages=messages, max_tokens=100
+                model=model_name, messages=messages, max_tokens=1000
             )
             return response.choices[0].message.content
         except Exception as e:

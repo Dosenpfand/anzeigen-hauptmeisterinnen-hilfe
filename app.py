@@ -54,7 +54,12 @@ VIENNA_TZ = pytz.timezone("Europe/Vienna")
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat_decimal}&lon={lon_decimal}&accept-language=de"
 NOMINATIM_USER_AGENT = "FalschparkerApp/0.1 (falschparker@sad.bz)"
 GEMINI_NO_PLATE_RESPONSE = "N/A"
-GEMINI_MODEL_NAME = "google/gemini-2.0-flash-lite-001"
+GEMINI_MODEL_NAME = "google/gemini-3.8-flash"
+GEMINI_FALLBACK_MODEL_NAMES = [
+    "google/gemini-3.5-flash-lite",
+    "google/gemini-3.1-flash-lite",
+    "google/gemini-2.5-flash-lite",
+]
 GEMINI_PROMPT = (
     "Analyze this image and extract the vehicle number plate. "
     "The image contains a car. Focus on identifying the number plate text. "
@@ -293,29 +298,30 @@ def _call_gemini_for_number_plate(
     import base64
     base64_image = base64.b64encode(image_data).decode('utf-8')
 
-    response = client.chat.completions.create(
-        model=GEMINI_MODEL_NAME,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": GEMINI_PROMPT
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}"
-                        }
-                    }
-                ]
-            }
-        ],
-        max_tokens=100
-    )
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": GEMINI_PROMPT},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                },
+            ],
+        }
+    ]
 
-    return response.choices[0].message.content
+    last_error: Optional[Exception] = None
+    for model_name in [GEMINI_MODEL_NAME, *GEMINI_FALLBACK_MODEL_NAMES]:
+        try:
+            response = client.chat.completions.create(
+                model=model_name, messages=messages, max_tokens=100
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.warning(f"Model {model_name} failed: {e}. Trying next fallback.")
+            last_error = e
+    raise last_error
 
 
 def _extract_number_plate_from_image_data(

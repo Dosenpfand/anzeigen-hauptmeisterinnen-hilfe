@@ -328,11 +328,14 @@
             <li>📧 Erhalte eine E-Mail-Vorlage an die Parkraumüberwachung der MA 67.</li>
         </ol>
         <form id="uploadForm">
-            <!-- application/x-keep-exif is a dummy type listed on purpose: if only image types are
-                 accepted, Chrome on Android opens the system Photo Picker, which strips the GPS EXIF
-                 data. A non-image type makes it fall back to the Files app, which keeps it. Unlike
-                 application/octet-stream, an unknown type still lets the Files app filter for JPGs. -->
-            <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, image/jpeg, application/x-keep-exif" required>
+            <!-- The accept list is chosen so Android browsers avoid the system Photo Picker, which strips
+                 the GPS EXIF data:
+                 - Chrome uses the Photo Picker if every accepted type is an image type. The dummy type
+                   application/x-keep-exif makes it fall back to the Files app, which keeps GPS. Unlike
+                   application/octet-stream, an unknown type still lets the Files app filter for JPGs.
+                 - Firefox drops unknown types, but uses the Photo Picker for any image/* MIME type. Only
+                   listing extensions keeps it on the Files app. Do not add image/jpeg here. -->
+            <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, application/x-keep-exif" required>
 
             <div class="form-row" style="font-size: 0.9em;">
                 <input type="checkbox" id="deviceLocationCheckbox" name="useDeviceLocation">

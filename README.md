@@ -14,6 +14,7 @@ A live instance of the application is available at: [falschparker.sad.bz](https:
 *   **EXIF Data Extraction**: Extracts date, time, and GPS coordinates (if available) from image metadata.
 *   **License Plate Recognition**: Utilizes Google Gemini AI to identify vehicle license plates from the image.
 *   **Location Lookup**: Converts GPS coordinates to a human-readable address using Nominatim.
+*   **Device Location Fallback**: If the photo has no GPS data, users can opt in to use their current device location instead.
 *   **Rate Limiting**: Implements rate limiting to prevent abuse.
 
 ## Getting Started

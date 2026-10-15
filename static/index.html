@@ -334,6 +334,11 @@
             <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, image/jpeg, application/octet-stream" required>
 
             <div class="form-row" style="font-size: 0.9em;">
+                <input type="checkbox" id="deviceLocationCheckbox" name="useDeviceLocation">
+                <label for="deviceLocationCheckbox" style="font-weight: normal;">Aktuellen Standort verwenden, falls das Foto keine Standortdaten enthält.</label>
+            </div>
+
+            <div class="form-row" style="font-size: 0.9em;">
                 <input type="checkbox" id="termsCheckbox" name="terms" required>
                 <label for="termsCheckbox" style="font-weight: normal;">Ich akzeptiere die <a href="#" id="termsLink" style="color: var(--header-color);">Nutzungsbedingungen</a>.</label>
             </div>
@@ -359,6 +364,7 @@
         <div id="loadingSpinner" style="display: none;"></div>
         <div id="responseArea">
             <h2 id="responseHeader" style="display: none;">E-Mail-Entwurf</h2>
+            <p id="locationNote" style="display: none;"></p>
             <pre id="response" style="display: none;"></pre>
             <button id="openEmailClientButton" class="action-button">In deinem E-Mail-Programm öffnen</button>
             <p id="errorMessage" class="error"></p>
@@ -382,6 +388,20 @@
             "generic_client_error": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später erneut oder überprüfe die Browser-Konsole für technische Details.",
             "terms_not_accepted": "Bitte akzeptiere die Nutzungsbedingungen, um fortzufahren."
         };
+
+        function getDeviceLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("Geolocation not supported"));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 60000
+                });
+            });
+        }
 
         const termsModal = document.getElementById('termsModal');
         const termsLink = document.getElementById('termsLink');
@@ -427,8 +447,12 @@
             const emailButton = document.getElementById('openEmailClientButton');
             const submitButton = document.getElementById('submitButton');
             const loadingSpinner = document.getElementById('loadingSpinner');
+            const deviceLocationCheckbox = document.getElementById('deviceLocationCheckbox');
+            const locationNoteElement = document.getElementById('locationNote');
 
             responseElement.textContent = '';
+            locationNoteElement.textContent = '';
+            locationNoteElement.style.display = 'none';
             responseElement.style.display = 'none';
             responseHeaderElement.style.display = 'none';
             errorMessageElement.textContent = '';
@@ -451,6 +475,19 @@
             try {
                 loadingSpinner.style.display = 'block';
                 submitButton.disabled = true;
+
+                // Only ask for the device location if the user explicitly opted in
+                let deviceLocationFailed = false;
+                if (deviceLocationCheckbox.checked) {
+                    try {
+                        const position = await getDeviceLocation();
+                        formData.append('device_latitude', position.coords.latitude);
+                        formData.append('device_longitude', position.coords.longitude);
+                    } catch (e) {
+                        console.warn("Could not get device location:", e);
+                        deviceLocationFailed = true;
+                    }
+                }
 
                 const response = await fetch('/extract_info/', {
                     method: 'POST',
@@ -497,6 +534,13 @@ Fotos: Im Anhang
 Für Rückfragen stehe ich selbstverständlich gerne per E-Mail zur Verfügung.
 
 Mit freundlichen Grüßen`;
+                    if (data.location_source === 'device') {
+                        locationNoteElement.textContent = "Das Foto enthält keine Standortdaten. Der Ort wurde aus deinem aktuellen Standort ermittelt, bitte überprüfe ihn.";
+                        locationNoteElement.style.display = 'block';
+                    } else if (!data.location_source && deviceLocationFailed) {
+                        locationNoteElement.textContent = "Das Foto enthält keine Standortdaten und dein aktueller Standort konnte nicht ermittelt werden. Bitte ergänze den Ort manuell.";
+                        locationNoteElement.style.display = 'block';
+                    }
                     responseHeaderElement.style.display = 'block';
                     responseElement.style.display = 'block';
                     responseElement.textContent = reportText;

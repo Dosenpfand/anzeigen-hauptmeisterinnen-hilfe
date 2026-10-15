@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Request
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -143,6 +143,47 @@ def _get_datetime_original(exif_ifd: Optional[dict]) -> Optional[str]:
         return None
 
 
+async def _reverse_geocode(lat_decimal: float, lon_decimal: float) -> Optional[str]:
+    """Fetches a human-readable address for the given coordinates via Nominatim."""
+    address_str: Optional[str] = None
+    nominatim_url = NOMINATIM_URL.format(lat_decimal=lat_decimal, lon_decimal=lon_decimal)
+    headers = {"User-Agent": NOMINATIM_USER_AGENT}
+    try:
+        async with httpx.AsyncClient() as client:
+            api_response = await client.get(nominatim_url, headers=headers, timeout=10.0)
+        api_response.raise_for_status()
+        address_data = api_response.json()
+        address_components = address_data.get("address", {})
+
+        address_parts = []
+        street = address_components.get("road")
+        if street:
+            house_number = address_components.get("house_number")
+            full_street = f"{street} {house_number}" if house_number else street
+            address_parts.append(full_street)
+        postcode = address_components.get("postcode")
+        if postcode:
+            address_parts.append(postcode)
+        city_keys = ["city", "town", "village", "hamlet"]
+        city_name = next(
+            (address_components.get(key) for key in city_keys if address_components.get(key)),
+            None,
+        )
+        if city_name:
+            address_parts.append(city_name)
+        if address_parts:
+            address_str = ", ".join(address_parts)
+    except httpx.RequestError as exc:
+        logger.error(f"Nominatim request error for {exc.request.url!r}: {exc}")
+    except httpx.HTTPStatusError as exc:
+        logger.error(f"Nominatim API error {exc.response.status_code} for {exc.request.url!r}.")
+    except Exception as e:
+        logger.error(f"Unexpected error during geocoding: {str(e)}")
+        # address_str remains None as initialized
+
+    return address_str
+
+
 async def _get_location_data_from_gps(
     raw_gps_info: Optional[dict],
 ) -> Tuple[Optional[float], Optional[float], Optional[str]]:
@@ -175,41 +216,7 @@ async def _get_location_data_from_gps(
         logger.error(f"Error converting DMS to decimal: {e}")
         return None, None, None
 
-    if lat_decimal is not None and lon_decimal is not None:
-        nominatim_url = NOMINATIM_URL.format(lat_decimal=lat_decimal, lon_decimal=lon_decimal)
-        headers = {"User-Agent": NOMINATIM_USER_AGENT}
-        try:
-            async with httpx.AsyncClient() as client:
-                api_response = await client.get(nominatim_url, headers=headers, timeout=10.0)
-            api_response.raise_for_status()
-            address_data = api_response.json()
-            address_components = address_data.get("address", {})
-
-            address_parts = []
-            street = address_components.get("road")
-            if street:
-                house_number = address_components.get("house_number")
-                full_street = f"{street} {house_number}" if house_number else street
-                address_parts.append(full_street)
-            postcode = address_components.get("postcode")
-            if postcode:
-                address_parts.append(postcode)
-            city_keys = ["city", "town", "village", "hamlet"]
-            city_name = next(
-                (address_components.get(key) for key in city_keys if address_components.get(key)),
-                None,
-            )
-            if city_name:
-                address_parts.append(city_name)
-            if address_parts:
-                address_str = ", ".join(address_parts)
-        except httpx.RequestError as exc:
-            logger.error(f"Nominatim request error for {exc.request.url!r}: {exc}")
-        except httpx.HTTPStatusError as exc:
-            logger.error(f"Nominatim API error {exc.response.status_code} for {exc.request.url!r}.")
-        except Exception as e:
-            logger.error(f"Unexpected error during geocoding: {str(e)}")
-            # address_str remains None as initialized
+    address_str = await _reverse_geocode(lat_decimal, lon_decimal)
 
     return lat_decimal, lon_decimal, address_str
 
@@ -249,12 +256,31 @@ async def read_root():
 
 @app.post("/extract_info/")
 @limiter.limit(rate_limit_str)
-async def extract_info(request: Request, file: UploadFile = File(...)):
+async def extract_info(
+    request: Request,
+    file: UploadFile = File(...),
+    device_latitude: Optional[float] = Form(None),
+    device_longitude: Optional[float] = Form(None),
+):
     try:
         img, img_stream = await _load_image_from_upload(file)
 
         # Process EXIF data
         vienna_datetime_iso, lat_decimal, lon_decimal, address_str = await _process_exif_data(img)
+        location_source = "exif" if lat_decimal is not None and lon_decimal is not None else None
+
+        # Fall back to the device location the user opted to share, if the photo has no GPS data
+        if (
+            location_source is None
+            and device_latitude is not None
+            and device_longitude is not None
+            and -90 <= device_latitude <= 90
+            and -180 <= device_longitude <= 180
+        ):
+            logger.info("No GPS data in EXIF. Using device location provided by the user.")
+            lat_decimal, lon_decimal = device_latitude, device_longitude
+            address_str = await _reverse_geocode(lat_decimal, lon_decimal)
+            location_source = "device"
 
         # Number Plate Extraction
         image_bytes = img_stream.getvalue()
@@ -267,6 +293,7 @@ async def extract_info(request: Request, file: UploadFile = File(...)):
         if lat_decimal is not None and lon_decimal is not None:
             response_payload["latitude"] = lat_decimal
             response_payload["longitude"] = lon_decimal
+            response_payload["location_source"] = location_source
         if address_str:
             response_payload["address"] = address_str
         if number_plate_str:

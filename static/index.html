@@ -328,7 +328,10 @@
             <li>📧 Erhalte eine E-Mail-Vorlage an die Parkraumüberwachung der MA 67.</li>
         </ol>
         <form id="uploadForm">
-            <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg" required>
+            <!-- application/octet-stream is listed on purpose: if only image types are accepted,
+                 Chrome on Android opens the system Photo Picker, which strips the GPS EXIF data.
+                 A non-image type makes it fall back to the regular file chooser, which keeps it. -->
+            <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, image/jpeg, application/octet-stream" required>
 
             <div class="form-row" style="font-size: 0.9em;">
                 <input type="checkbox" id="termsCheckbox" name="terms" required>
